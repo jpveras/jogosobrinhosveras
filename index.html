@@ -678,8 +678,12 @@ function rei(m) {
 }
 
 function vovo() {
-  const sk = '#B97A55', hair = '#3A2A22', cg = '#C77DFF';
+  const sk = '#A86B45', hair = '#A3A8B0', dk = '#6E737B', lt = '#E2E5EA', cg = '#C77DFF';
+  const braid = [[35, 80], [36, 90], [37, 100], [38, 110]].map(p => '<ellipse cx="' + p[0] + '" cy="' + p[1] + '" rx="5.5" ry="6.5" fill="' + hair + '" stroke="' + OUT + '" stroke-width="1.8"/>').join('') +
+    '<rect x="32" y="114" width="12" height="5" rx="2" fill="#FF5D8F" stroke="' + OUT + '" stroke-width="1.4"/>' +
+    '<path d="M35 120 l-3 8 M38 120 v9 M41 120 l3 8" stroke="' + dk + '" stroke-width="2" stroke-linecap="round"/>';
   return shadow +
+  '<path d="M28 62 Q24 22 60 22 Q96 22 92 62 L94 92 Q84 96 78 90 L42 90 Q36 96 26 92 Z" fill="' + hair + '" ' + S + '/>' +
   '<path d="M38 112 H82 L91 148 H29 Z" fill="#7B5EA7" ' + S + '/>' +
   '<ellipse cx="48" cy="150" rx="9" ry="5" fill="' + OUT + '"/><ellipse cx="72" cy="150" rx="9" ry="5" fill="' + OUT + '"/>' +
   '<rect x="24" y="90" width="12" height="26" rx="6" fill="' + cg + '" ' + S + ' transform="rotate(16 30 92)"/>' +
@@ -694,15 +698,17 @@ function vovo() {
   '<path d="M118 46 l3 -3 M96 48 l-3 -3 M116 72 l3 2" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"/>' +
   '<rect x="84" y="90" width="12" height="24" rx="6" fill="' + cg + '" ' + S + ' transform="rotate(-20 90 92)"/>' +
   '<circle cx="96" cy="112" r="6" fill="' + sk + '" ' + S + '/>' +
-  puffs([[33, 60, 12], [87, 60, 12], [35, 42, 12], [85, 42, 12]], hair) +
+  braid +
   '<circle cx="60" cy="58" r="30" fill="' + sk + '" ' + S + '/>' +
-  puffs([[60, 20, 13]], hair) + puffs([[42, 36, 9], [55, 31, 10], [68, 31, 10], [80, 37, 9]], hair) +
-  '<path d="M52 14 Q60 8 68 14 M46 34 Q52 28 58 30" fill="none" stroke="#C9CDD3" stroke-width="2.4" stroke-linecap="round"/>' +
+  '<path d="M30 60 Q28 25 60 24 Q92 25 90 60 Q86 44 74 38 Q66 34 60 36 Q54 34 46 38 Q34 44 30 60 Z" fill="' + hair + '" ' + S + '/>' +
+  '<path d="M60 25 V36" stroke="' + dk + '" stroke-width="2" stroke-linecap="round"/>' +
+  '<path d="M52 30 Q45 34 40 43 M68 30 Q75 34 80 43" fill="none" stroke="' + lt + '" stroke-width="2.2" stroke-linecap="round"/>' +
+  '<path d="M45 28 Q38 34 35 46 M75 28 Q82 34 85 46" fill="none" stroke="' + dk + '" stroke-width="1.6" stroke-linecap="round"/>' +
   eyes(49, 71, 61, OUT, 'joy') +
   '<circle cx="49" cy="60" r="8.5" fill="#fff" fill-opacity=".25" stroke="' + OUT + '" stroke-width="2.2"/>' +
   '<circle cx="71" cy="60" r="8.5" fill="#fff" fill-opacity=".25" stroke="' + OUT + '" stroke-width="2.2"/>' +
   '<path d="M57.5 60 H62.5" stroke="' + OUT + '" stroke-width="2.2"/>' +
-  cheeks(40, 80, 72, 6, .55) +
+  cheeks(40, 80, 72, 6, .5) +
   '<path d="M52 75 Q60 83 68 75" fill="none" stroke="' + OUT + '" stroke-width="2.6" stroke-linecap="round"/>';
 }
 

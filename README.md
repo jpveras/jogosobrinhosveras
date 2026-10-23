@@ -20,6 +20,6 @@ O Rei Ranzinza roubou as cores, as músicas, os abraços e os doces do reino. Ca
 
 Abra o `index.html` em qualquer navegador de celular, tablet ou computador. Não precisa instalar nada.
 
-O progresso fica salvo no próprio aparelho, e o botão "Resetar progresso" recomeça do zero. A trilha 16-bit e os efeitos sonoros são gerados pelo próprio navegador, e os botões "Música" e "Som" ficam no canto de cima durante as fases.
+As fases abrem em ordem: só dá para jogar a próxima depois de vencer a atual, e a fase bônus do João Pedro abre quando as seis fases forem vencidas. O progresso fica salvo no próprio aparelho, e o botão "Resetar progresso" recomeça do zero. A trilha 16-bit e os efeitos sonoros são gerados pelo próprio navegador, e os botões "Música" e "Som" ficam no canto de cima durante as fases.
 
 Feito com carinho pelo Tio João e pela Tia Amanda. ♥

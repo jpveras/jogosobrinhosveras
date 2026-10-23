@@ -166,6 +166,7 @@ svg .pulse, svg .pop-in, svg .spin, svg .wobble, svg .fade-out { transform-box: 
   padding: 12px 40px; box-shadow: 0 6px 0 var(--ink);
 }
 .big.alt { background: #2D7FF9; color: #fff; font-size: 1.15rem; padding: 10px 26px; }
+.big:disabled { opacity: .5; cursor: default; box-shadow: 0 3px 0 var(--ink); transform: none; }
 .big:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--ink); }
 .ghost {
   border: 3px solid currentColor; border-radius: 999px; background: transparent;
@@ -2736,7 +2737,8 @@ const PHASES = [
   { id: 'fase6', name: 'Rei Ranzinza', who: 'todos', run: () => fase6() }
 ];
 function isDone(id) { try { return localStorage.getItem('primos.' + id) === '1'; } catch (e) { return false; } }
-const unlocked = i => i === 0 || isDone(PHASES[i - 1].id);
+const unlocked = i => i === 0 || PHASES.slice(0, i).every(p => isDone(p.id));
+const bonusOpen = () => PHASES.every(p => isDone(p.id));
 const daDo = k => (k === 'cecilia' || k === 'manu' || k === 'angelina' ? 'da ' : 'do ');
 function showTitle() {
   $('#cast').innerHTML = ORDER.concat('joao').map((k, i) => '<figure><div style="animation-delay:' + (i * .15) + 's" class="' + (k === 'nick' ? 'float' : 'bob') + '">' + figure(k) + '</div><figcaption style="color:' + HEROES[k].color + '">' + HEROES[k].name + '</figcaption></figure>').join('');
@@ -2746,7 +2748,7 @@ function showTitle() {
     const sub = (p.who === 'todos' ? 'Todos juntos' : 'Fase ' + daDo(p.who) + h.name) + (open ? '' : ' · bloqueada');
     return '<li class="' + cls + '" style="--c:' + h.color + '"><button class="map-btn" data-i="' + i + '"' + (open ? '' : ' disabled') + '><span class="n">' + (i + 1) + '</span><span style="min-width:0"><b>' + p.name + '</b><span class="s">' + sub + '</span></span></button></li>';
   }).join('') +
-    '<li class="open' + (isDone('bonus') ? ' done' : '') + '" style="--c:#2D7FF9"><button class="map-btn" data-i="b"><span class="n">B</span><span style="min-width:0"><b>Cidade dos Robôs</b><span class="s">Bônus do João Pedro</span></span></button></li>';
+    '<li class="' + (bonusOpen() ? 'open' + (isDone('bonus') ? ' done' : '') : 'locked') + '" style="--c:#2D7FF9"><button class="map-btn" data-i="b"' + (bonusOpen() ? '' : ' disabled') + '><span class="n">B</span><span style="min-width:0"><b>Cidade dos Robôs</b><span class="s">Bônus do João Pedro' + (bonusOpen() ? '' : ' · abre ao vencer as 6 fases') + '</span></span></button></li>';
   $('#map').querySelectorAll('.map-btn').forEach(b => b.addEventListener('click', () => {
     if (b.disabled) return;
     if (b.dataset.i === 'b') startBonus(); else runPhase(+b.dataset.i, false);
@@ -2755,6 +2757,9 @@ function showTitle() {
   $('#play').textContent = next <= 0 ? (next === 0 ? 'Jogar' : 'Jogar do começo') : 'Continuar: ' + PHASES[next].name;
   $('#play').style.fontSize = next > 0 ? '1.25rem' : '';
   $('#skip').hidden = true;
+  const bo = bonusOpen();
+  $('#bonusBtn').disabled = !bo;
+  $('#bonusBtn').textContent = bo ? 'Fase bônus: Cidade dos Robôs' : 'Fase bônus: vença as 6 fases para abrir';
   const any = PHASES.some(p => isDone(p.id)) || isDone('bonus');
   $('#resetTitle').hidden = !any;
   $('#title').hidden = false; $('#end').hidden = true;
@@ -2797,13 +2802,13 @@ function showEnd(kind) {
 }
 let busy = false;
 async function runPhase(i, intro) {
-  if (busy) return; busy = true; lastPhase = PHASES[i].id;
+  if (busy || !unlocked(i)) return; busy = true; lastPhase = PHASES[i].id;
   ac(); $('#title').hidden = true; $('#end').hidden = true;
   try { if (intro) await abertura(); await PHASES[i].run(); } finally { busy = false; }
 }
 async function start(intro) { return runPhase(0, intro); }
 async function startBonus() {
-  if (busy) return; busy = true; lastPhase = 'bonus';
+  if (busy || !bonusOpen()) return; busy = true; lastPhase = 'bonus';
   ac(); $('#title').hidden = true; $('#end').hidden = true;
   try { await bonus(); } finally { busy = false; }
 }

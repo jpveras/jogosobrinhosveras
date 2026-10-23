@@ -98,8 +98,6 @@ svg .pulse, svg .pop-in, svg .spin, svg .wobble, svg .fade-out { transform-box: 
 .goals { display: flex; gap: 4px; margin-left: 4px; }
 .goals i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ink); background: #D7D9DE; display: block; }
 .goals i.on { background: var(--sun); box-shadow: inset 0 0 0 3px #fff; }
-#soundBtn { pointer-events: auto; padding: 6px 12px; }
-#soundBtn[aria-pressed="false"] { opacity: .7; }
 
 /* Dica de mira */
 #hint {
@@ -238,8 +236,14 @@ svg .pulse, svg .pop-in, svg .spin, svg .wobble, svg .fade-out { transform-box: 
 .end-card .ghost { color: var(--ink); }
 
 .hud-right { display: flex; gap: 6px; }
-#musicBtn { pointer-events: auto; padding: 6px 12px; }
-#musicBtn[aria-pressed="false"] { opacity: .7; }
+.tog { pointer-events: auto; padding: 5px 9px; font-size: .8rem; color: var(--ink); }
+.tog[aria-pressed="false"] { opacity: .6; text-decoration: line-through; text-decoration-thickness: 2px; }
+#hud > .chip:first-child { min-width: 0; }
+#phaseName { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.hud-right { flex: none; }
+.title-toggles { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.title-toggles .tog { font-size: .95rem; padding: 6px 14px; }
+.toggle-note { margin: -4px 0 0; font-size: .8rem; opacity: .75; }
 
 /* Mensagem final */
 #gift { z-index: 25; background: radial-gradient(circle at 50% 35%, #7B2FBE, #3B2766 55%, var(--night)); color: var(--paper); overflow: hidden; }
@@ -312,7 +316,7 @@ svg .pulse, svg .pop-in, svg .spin, svg .wobble, svg .fade-out { transform-box: 
   <div id="hud" hidden>
     <div class="chip"><span class="num" id="phaseNum">1</span><span id="phaseName">Estádio</span>
       <span class="goals" id="goals" aria-label="Gols"><i></i><i></i><i></i><i></i></span></div>
-    <div class="hud-right"><button class="chip" id="musicBtn" aria-pressed="true">Música</button><button class="chip" id="soundBtn" aria-pressed="true">Som</button></div>
+    <div class="hud-right"><button class="chip tog" data-k="music" aria-pressed="true">Música</button><button class="chip tog" data-k="voice" aria-pressed="true">Voz</button><button class="chip tog" data-k="sound" aria-pressed="true">Efeitos</button></div>
   </div>
 
   <div id="hint" hidden>Toque no gol para chutar!</div>
@@ -387,6 +391,8 @@ svg .pulse, svg .pop-in, svg .spin, svg .wobble, svg .fade-out { transform-box: 
       <p class="logo-sub">e o Reino Sem Cor</p>
       <div class="cast" id="cast"></div>
       <div class="title-actions">
+        <div class="title-toggles"><button class="chip tog" data-k="voice" aria-pressed="true">Voz</button><button class="chip tog" data-k="music" aria-pressed="true">Música</button><button class="chip tog" data-k="sound" aria-pressed="true">Efeitos</button></div>
+        <p class="toggle-note">Toque para ligar ou desligar a narração, a música e os efeitos.</p>
         <button class="big" id="play">Jogar</button>
         <button class="big alt" id="bonusBtn">Fase bônus: Cidade dos Robôs</button>
         <button class="ghost" id="skip" hidden>Ir direto ao estádio</button>
@@ -846,7 +852,7 @@ function figure(who, mood, viewBox) {
 const portrait = (who, mood) => figure(who, mood, FACE[who] || '0 0 100 100');
 
 /* ---------- Som ---------- */
-let SOUND = true, AC = null, VOICE = null;
+let SOUND = true, NARRA = true, AC = null, VOICE = null;
 function ac() {
   if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } }
   if (AC && AC.state === 'suspended') { try { AC.resume(); } catch (e) {} }
@@ -1022,12 +1028,12 @@ function duck(on) {
   try { MUS.gain.gain.setTargetAtTime(on ? .22 : .55, AC.currentTime, .15); } catch (e) {}
 }
 function speak(who, text) {
-  if (!SOUND) return;
+  if (!NARRA) return;
   try { speechSynthesis.cancel(); } catch (e) { return; }
   const tok = ++speakTok, base = CAST[who] || CAST.vovo, segs = segments(text);
   let k = 0;
   const next = () => {
-    if (tok !== speakTok || !SOUND) return;
+    if (tok !== speakTok || !NARRA) return;
     if (k >= segs.length) { duck(false); return; }
     const sg = segs[k++], m = exprOf(sg);
     m.fx.filter((f, i) => m.fx.indexOf(f) === i).forEach(f => VFX[f] && VFX[f]());
@@ -1104,7 +1110,7 @@ function musicTick() {
   }
 }
 function startMusic() {
-  if (!MUS.on || !SOUND || MUS.timer) return;
+  if (!MUS.on || MUS.timer) return;
   const c = ac(); if (!c) return;
   if (!MUS.wave) {
     const n = 24, re = new Float32Array(n), im = new Float32Array(n);
@@ -1131,20 +1137,27 @@ document.addEventListener('visibilitychange', () => {
   if (!AC) return;
   try { if (document.hidden) AC.suspend(); else AC.resume(); } catch (e) {}
 });
-$('#musicBtn').addEventListener('click', () => {
-  MUS.on = !MUS.on;
-  $('#musicBtn').setAttribute('aria-pressed', String(MUS.on));
-  $('#musicBtn').textContent = MUS.on ? 'Música' : 'Sem música';
-  if (MUS.on) startMusic(); else stopMusic();
-});
-
-$('#soundBtn').addEventListener('click', () => {
-  SOUND = !SOUND;
-  if (SOUND) startMusic(); else stopMusic();
-  $('#soundBtn').setAttribute('aria-pressed', String(SOUND));
-  $('#soundBtn').textContent = SOUND ? 'Som' : 'Sem som';
-  if (!SOUND) { try { speechSynthesis.cancel(); } catch (e) {} }
-});
+const CFG_KEY = 'primos.config';
+function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify({ music: MUS.on, voice: NARRA, sound: SOUND })); } catch (e) {} }
+function loadCfg() {
+  try { const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); if (c.music === false) MUS.on = false; if (c.voice === false) NARRA = false; if (c.sound === false) SOUND = false; } catch (e) {}
+}
+function syncToggles() {
+  const st = { music: MUS.on, voice: NARRA, sound: SOUND };
+  document.querySelectorAll('.tog').forEach(b => {
+    const on = st[b.dataset.k];
+    b.setAttribute('aria-pressed', String(on));
+    b.setAttribute('aria-label', { music: 'Música', voice: 'Narração', sound: 'Efeitos sonoros' }[b.dataset.k] + (on ? ' ligada' : ' desligada'));
+  });
+}
+document.querySelectorAll('.tog').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.k;
+  if (k === 'music') { MUS.on = !MUS.on; if (MUS.on) { if (AC) startMusic(); } else stopMusic(); }
+  if (k === 'voice') { NARRA = !NARRA; if (!NARRA) { speakTok++; try { speechSynthesis.cancel(); } catch (e) {} duck(false); } }
+  if (k === 'sound') { SOUND = !SOUND; if (SOUND) sfx.pop(); }
+  saveCfg(); syncToggles();
+}));
+loadCfg(); syncToggles();
 
 /* ---------- Diálogo, vez, poder ---------- */
 let dlgResolve = null, dlgReadyAt = 0;

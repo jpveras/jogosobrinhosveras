@@ -906,23 +906,150 @@ const sfx = {
   whistle() { tone(2700, .12, 'square', .07); tone(2700, .3, 'square', .07, .18); },
   powerup() { tone(160, 1.1, 'sawtooth', .1, 0, 1300); [523, 784, 1047, 1568].forEach((f, i) => tone(f, .35, 'triangle', .14, .9 + i * .09)); noise(.9, .1, 3000, .9); }
 };
+/* ---------- Vozes: uma para cada personagem ---------- */
+const VOICES = { f: [], m: [], any: [] };
+const FEM = /luciana|maria|francisca|thalita|fernanda|joana|leila|vit[oó]ria|raquel|camila|\bana\b|female|feminin|helena|yara|brenda|elza|giovanna|let[ií]cia|manuela|nicole|tatiane|catarina|in[eê]s|amanda|beatriz|julia|j[uú]lia|isabela|larissa/i;
+const MAL = /felipe|daniel|ant[oô]nio|ricardo|f[aá]bio|eduardo|humberto|j[uú]lio|donato|\bmale\b|masculin|val[eé]rio|nicolau|cristiano|duarte|joaquim|thiago|jo[aã]o|pedro|lucas|rafael|marcos/i;
 function pickVoice() {
   try {
-    const vs = speechSynthesis.getVoices();
-    VOICE = vs.find(v => /pt[-_]BR/i.test(v.lang)) || vs.find(v => /^pt/i.test(v.lang)) || null;
+    const score = v => (/natural|neural|online|premium|enhanced/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 2 : 0) + (/pt[-_]BR/i.test(v.lang) ? 1 : 0);
+    const vs = speechSynthesis.getVoices().filter(v => /^pt/i.test(v.lang)).sort((a, b) => score(b) - score(a));
+    VOICES.any = vs;
+    VOICES.f = vs.filter(v => FEM.test(v.name));
+    VOICES.m = vs.filter(v => !FEM.test(v.name) && MAL.test(v.name));
+    VOICE = vs[0] || null;
   } catch (e) { VOICE = null; }
 }
 try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
+/* g: f/m · i: qual voz da lista (distribui quando o aparelho tem várias) */
+const CAST = {
+  samuel:   { g: 'm', i: 0, pitch: 1.45, rate: 1.14, vol: 1 },
+  cecilia:  { g: 'f', i: 0, pitch: 1.55, rate: .9, vol: .85 },
+  manu:     { g: 'f', i: 1, pitch: 1.35, rate: 1.16, vol: 1 },
+  angelina: { g: 'f', i: 2, pitch: 1.72, rate: 1.08, vol: 1 },
+  nick:     { g: 'f', i: 3, pitch: 2, rate: 1.02, vol: .9 },
+  joao:     { g: 'm', i: 1, pitch: 1.18, rate: 1.06, vol: 1 },
+  vovo:     { g: 'f', i: 4, pitch: 1.02, rate: .9, vol: 1 },
+  rei:      { g: 'm', i: 2, pitch: .45, rate: .86, vol: 1 },
+  rugidao:  { g: 'm', i: 3, pitch: .2, rate: .78, vol: 1 },
+  goleiro:  { g: 'm', i: 3, pitch: .72, rate: .88, vol: 1 },
+  barreira: { g: 'm', i: 4, pitch: .9, rate: 1.06, vol: 1 },
+  guarda:   { g: 'm', i: 1, pitch: .78, rate: .9, vol: 1 },
+  borrao:   { g: 'm', i: 2, pitch: .65, rate: 1.08, vol: 1 },
+  tampao:   { g: 'm', i: 0, pitch: .7, rate: .94, vol: 1 },
+  despertador: { g: 'f', i: 1, pitch: 1.6, rate: 1.32, vol: 1 },
+  todos:    { g: 'f', i: 2, pitch: 1.4, rate: 1.06, vol: 1 }
+};
+function voiceFor(who) {
+  const c = CAST[who] || CAST.vovo;
+  const list = VOICES[c.g].length ? VOICES[c.g] : VOICES.any;
+  return list.length ? list[c.i % list.length] : null;
+}
+/* Expressões entre colchetes mudam o jeito de falar e podem tocar um som */
+const EXPR = [
+  [/baixinho|sussurr|t[ií]mid/, { vol: .5, rate: -.14, pitch: .05 }],
+  [/brav|grit/, { vol: 1, rate: .14, pitch: .12 }],
+  [/cantando/, { rate: -.16, pitch: .28, fx: 'sing' }],
+  [/rindo/, { rate: .06, pitch: .15, fx: 'giggle' }],
+  [/sorri/, { pitch: .1 }],
+  [/bocej/, { rate: -.28, pitch: -.12, fx: 'yawn' }],
+  [/dorme|dormindo/, { rate: -.2, pitch: -.1, vol: .6, fx: 'snore' }],
+  [/fung|trist/, { rate: -.16, pitch: -.14, fx: 'sniff' }],
+  [/mastig/, { fx: 'crunch' }],
+  [/espirr/, { fx: 'sneeze' }],
+  [/pausa/, { pause: 650 }],
+  [/l[aá] do alto|l[aá] de longe/, { vol: .7, pitch: .08 }],
+  [/aninha|beijo|abra[cç]a/, { fx: 'kiss' }],
+  [/bip|bop/, { fx: 'beep' }]
+];
+const SAY_FIX = [
+  [/JP-1/g, 'jota pê um'], [/\bHA\.\.\./g, 'Rá...'], [/\bHA(HA)+!?/gi, 'rá rá rá rá!'], [/\bHi(hi)+!?/gi, 'rí rí rí!'], [/\bZzz+\.*/gi, ''],
+  [/\bG(O|o){2,}L\b/g, 'gôl'], [/\bA{3,}H+!?/gi, 'aah!'], [/\bSUGA+A\b/gi, 'suuga'], [/\bRO+A+R\b/gi, 'roar'],
+  [/\bRA{3,}H+/gi, 'ráá'], [/\bUa{2,}h+/gi, 'uááh'], [/\bPi{3,}/gi, 'píí'], [/\bTRIM\b/g, 'trim'], [/\bHmpf\b/gi, 'humpf'],
+  [/\bHmm+\b/gi, 'hum'], [/\bOwn+\b/gi, 'own'], [/\bATCHIM\b/g, 'atchim'], [/\bShh+\b/gi, 'xiu'], [/\bFu+i+\b/gi, 'fuí'],
+  [/\bPor favo+r\b/gi, 'por favooor']
+];
+function speakable(t) {
+  SAY_FIX.forEach(([re, to]) => { t = t.replace(re, to); });
+  t = t.replace(/\b([A-ZÀ-Ý]{2,})\b/g, w => w.charAt(0) + w.slice(1).toLowerCase());
+  t = t.replace(/([a-zà-ÿ])\1{3,}/gi, '$1$1');
+  return t.replace(/\s+/g, ' ').trim();
+}
+function segments(text) {
+  const out = []; let notes = [], last = 0;
+  text.replace(/\[([^\]]+)\]/g, (m, n, i) => {
+    const before = text.slice(last, i);
+    if (before.trim()) { out.push({ notes, text: before }); notes = []; }
+    notes = notes.concat(n.toLowerCase()); last = i + m.length; return m;
+  });
+  const rest = text.slice(last);
+  if (rest.trim() || notes.length) out.push({ notes, text: rest });
+  return out.length ? out : [{ notes: [], text }];
+}
+function exprOf(seg) {
+  const m = { vol: 1, rate: 0, pitch: 0, fx: [], pause: 0 };
+  seg.notes.forEach(n => EXPR.forEach(([re, e]) => {
+    if (!re.test(n)) return;
+    if (e.vol != null) m.vol = Math.min(m.vol, e.vol);
+    m.rate += e.rate || 0; m.pitch += e.pitch || 0;
+    if (e.fx) m.fx.push(e.fx); if (e.pause) m.pause = e.pause;
+  }));
+  const t = seg.text;
+  if (/\b[A-ZÀ-Ý]{4,}\b/.test(t)) { m.rate += .1; m.pitch += .12; }
+  if (/!\s*$/.test(t.trim())) m.pitch += .05;
+  if (/\bHA(HA)+/i.test(t)) m.fx.push('laugh');
+  else if (/\bHi(hi)+/i.test(t)) m.fx.push('giggle');
+  if (/\bZzz/i.test(t)) m.fx.push('snore');
+  if (/\bATCHIM\b/.test(t)) m.fx.push('sneeze');
+  if (/\bUa{2,}h/i.test(t) && m.fx.indexOf('yawn') < 0) m.fx.push('yawn');
+  return m;
+}
+const VFX = {
+  giggle() { [1175, 1047, 1175, 988].forEach((f, i) => tone(f, .07, 'sine', .1, i * .09)); },
+  laugh() { [220, 196, 220, 175].forEach((f, i) => tone(f, .12, 'square', .06, i * .13)); },
+  yawn() { tone(520, .9, 'sine', .08, 0, 180); },
+  snore() { noise(.7, .1, 400); noise(.5, .07, 300, .9); },
+  sniff() { noise(.12, .1, 3000); noise(.12, .1, 3000, .2); },
+  crunch() { for (let i = 0; i < 4; i++) noise(.05, .3, 3200, i * .09); },
+  sneeze() { tone(700, .25, 'sine', .08, 0, 1100); noise(.25, .35, 3500, .3); },
+  sing() { [523, 659, 784].forEach((f, i) => tone(f, .3, 'triangle', .06, i * .25)); },
+  kiss() { tone(1400, .08, 'sine', .1, 0, 2200); },
+  beep() { tone(880, .08, 'square', .06); tone(660, .1, 'square', .06, .12); }
+};
+let speakTok = 0;
+function duck(on) {
+  if (!MUS || !MUS.gain || !AC) return;
+  try { MUS.gain.gain.setTargetAtTime(on ? .22 : .55, AC.currentTime, .15); } catch (e) {}
+}
 function speak(who, text) {
   if (!SOUND) return;
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'pt-BR'; if (VOICE) u.voice = VOICE;
-    const v = (HEROES[who] || {}).voice || {};
-    u.pitch = v.pitch == null ? 1 : v.pitch; u.rate = v.rate == null ? 1 : v.rate;
-    speechSynthesis.speak(u);
-  } catch (e) {}
+  try { speechSynthesis.cancel(); } catch (e) { return; }
+  const tok = ++speakTok, base = CAST[who] || CAST.vovo, segs = segments(text);
+  let k = 0;
+  const next = () => {
+    if (tok !== speakTok || !SOUND) return;
+    if (k >= segs.length) { duck(false); return; }
+    const sg = segs[k++], m = exprOf(sg);
+    m.fx.filter((f, i) => m.fx.indexOf(f) === i).forEach(f => VFX[f] && VFX[f]());
+    const words = speakable(sg.text);
+    const delay = m.pause + (m.fx.length ? 350 : 0);
+    setTimeout(() => {
+      if (tok !== speakTok) return;
+      if (!words) return next();
+      try {
+        const u = new SpeechSynthesisUtterance(words);
+        u.lang = 'pt-BR';
+        const v = voiceFor(who); if (v) u.voice = v;
+        u.pitch = clamp(base.pitch + m.pitch, 0, 2);
+        u.rate = clamp(base.rate + m.rate, .55, 1.6);
+        u.volume = clamp(base.vol * m.vol, 0, 1);
+        u.onend = next; u.onerror = next;
+        duck(true);
+        speechSynthesis.speak(u);
+      } catch (e) { next(); }
+    }, delay);
+  };
+  next();
 }
 /* ---------- Música 16-bit ---------- */
 const MUS = { on: true, timer: null, gain: null, step: 0, next: 0, loop: 0, tempo: 104, tr: 0, soft: false, wave: null, nbuf: null };
@@ -1037,7 +1164,7 @@ function showLine(who, text, isStatic) {
   $('#dlgP').innerHTML = portrait(who);
   $('#dlgWho').textContent = h.name;
   $('#dlgTxt').innerHTML = r.html;
-  speak(who, r.spoken);
+  speak(who, text);
 }
 function say(who, text) {
   showLine(who, text, false);

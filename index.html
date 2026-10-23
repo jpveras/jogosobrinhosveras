@@ -678,7 +678,7 @@ function rei(m) {
 }
 
 function vovo() {
-  const sk = '#F4D3BF', hair = '#F1F1F4', cg = '#C77DFF';
+  const sk = '#B97A55', hair = '#3A2A22', cg = '#C77DFF';
   return shadow +
   '<path d="M38 112 H82 L91 148 H29 Z" fill="#7B5EA7" ' + S + '/>' +
   '<ellipse cx="48" cy="150" rx="9" ry="5" fill="' + OUT + '"/><ellipse cx="72" cy="150" rx="9" ry="5" fill="' + OUT + '"/>' +
@@ -697,11 +697,12 @@ function vovo() {
   puffs([[33, 60, 12], [87, 60, 12], [35, 42, 12], [85, 42, 12]], hair) +
   '<circle cx="60" cy="58" r="30" fill="' + sk + '" ' + S + '/>' +
   puffs([[60, 20, 13]], hair) + puffs([[42, 36, 9], [55, 31, 10], [68, 31, 10], [80, 37, 9]], hair) +
+  '<path d="M52 14 Q60 8 68 14 M46 34 Q52 28 58 30" fill="none" stroke="#C9CDD3" stroke-width="2.4" stroke-linecap="round"/>' +
   eyes(49, 71, 61, OUT, 'joy') +
   '<circle cx="49" cy="60" r="8.5" fill="#fff" fill-opacity=".25" stroke="' + OUT + '" stroke-width="2.2"/>' +
   '<circle cx="71" cy="60" r="8.5" fill="#fff" fill-opacity=".25" stroke="' + OUT + '" stroke-width="2.2"/>' +
   '<path d="M57.5 60 H62.5" stroke="' + OUT + '" stroke-width="2.2"/>' +
-  cheeks(40, 80, 72, 6, .7) +
+  cheeks(40, 80, 72, 6, .55) +
   '<path d="M52 75 Q60 83 68 75" fill="none" stroke="' + OUT + '" stroke-width="2.6" stroke-linecap="round"/>';
 }
 
